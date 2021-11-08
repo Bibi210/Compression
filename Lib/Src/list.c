@@ -136,3 +136,27 @@ llu get_smallest_index(list_t *list) {
   }
   return best_index;
 }
+
+int some(list_t *list, int (*Prelicat)(void *)) {
+  llu i;
+  for (i = 0; i < list->size; i++) {
+    if (Prelicat(see_elem(list, i)) == 0)
+      return 0;
+  }
+  return -1;
+}
+
+int is_is(list_t *list, void *to_find) {
+  llu i;
+  for (i = 0; i < list->size; i++) {
+    if (list->comp_func(see_elem(list, i), to_find) == 0)
+      return 0;
+  }
+  return -1;
+}
+
+void foreach (list_t *list, void (*to_apply)(void *)) {
+  for (size_t i = 0; i < list->size; i++) {
+    to_apply(see_elem(list, i));
+  }
+}

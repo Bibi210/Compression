@@ -27,7 +27,8 @@ Ecrire File
 Lire File\
 Recreation des regions du Graphe a partir des Bords using fill method\
 Recreation de l’image en recréent le tableau de pixel a partir du Graphe\
-Output: Image de base sans perte
+Output = 
+* File : Image de base sans perte
 
 Brahima Dibassi\
 L3 Informatique

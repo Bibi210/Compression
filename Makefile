@@ -3,9 +3,8 @@
 #  Email  : amsi@ai.univ-paris8.fr
 #  Date   : 23/02/2006
 
-#  Modificiation : Mehdi Aghayani
-#  Email  : mehdi.aghayani@gmail.com
-#  Commentaire : modifi� afin de fonctionner avec OpenGL et MacOS X et libpng
+#  Modificiation : Dibassi Brahima
+#  Commentaire : Modfier Pour Projet
 #  
 #  Universit� Paris VIII
 
@@ -24,12 +23,14 @@ endif
 CC = gcc
 CFLAGS := -Wall
 LDFLAGS = -lm $(GL_LDFLAGS)
-EXE := Decomp Comp
+EXE := Decomp Comp Afficher
 
 all: $(EXE)
 
 Comp: Lib/Src/list.o Lib/Src/ppm.o
 Decomp: Lib/Src/list.o Lib/Src/ppm.o 
+Afficher: Lib/Src/ppm.o 
+
 
 list.o: Lib/list.h
 ppm.o: Lib/ima.h
