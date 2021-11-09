@@ -1,10 +1,17 @@
 #include "../list.h"
 
+int int_equal(void *a, void *b) { return *(int *)a == *(int *)b ? 0 : -1; }
+
 list_t init_list(size_t data_size, int (*comp_func)(void *, void *),
                  void (*free_func)(void *)) {
   if (free_func == NULL)
     free_func = free;
   list_t output = {data_size, 0, NULL, free_func, comp_func};
+  if (output.comp_func == NULL) {
+    if (output.data_size == sizeof(int)) {
+      output.comp_func = int_equal;
+    }
+  }
   return output;
 }
 
@@ -146,7 +153,7 @@ int some(list_t *list, int (*Prelicat)(void *)) {
   return -1;
 }
 
-int is_is(list_t *list, void *to_find) {
+int is_in(list_t *list, void *to_find) {
   llu i;
   for (i = 0; i < list->size; i++) {
     if (list->comp_func(see_elem(list, i), to_find) == 0)
@@ -159,4 +166,14 @@ void foreach (list_t *list, void (*to_apply)(void *)) {
   for (size_t i = 0; i < list->size; i++) {
     to_apply(see_elem(list, i));
   }
+}
+
+int equals(list_t *list, list_t *other) {
+  if (list->size != other->size || list->data_size != other->data_size)
+    return -1;
+  for (size_t i = 0; i < list->size; i++) {
+    if (list->comp_func(see_elem(list, i), see_elem(other, i)) != 0)
+      return -1;
+  }
+  return 0;
 }

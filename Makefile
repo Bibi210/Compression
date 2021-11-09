@@ -21,7 +21,7 @@ GL_LDFLAGS = -lGL -lglut -lGLU
 endif
 
 CC = gcc
-CFLAGS := -Wall
+CFLAGS := -Wall -g
 LDFLAGS = -lm $(GL_LDFLAGS)
 EXE := Decomp Comp Afficher
 

@@ -28,6 +28,7 @@ void print_list(list_t *list, void (*print_func)(void *data));
 void free_list(list_t *list);
 void free_node(Node_t *node, void (*free_func)(void *));
 llu get_smallest_index(list_t *list);
-int is_is(list_t *list, void *to_find);
+int is_in(list_t *list, void *to_find);
 void foreach (list_t *list, void (*to_apply)(void *));
 int some(list_t *list, int (*Prelicat)(void *));
+int equals(list_t *list, list_t *other);

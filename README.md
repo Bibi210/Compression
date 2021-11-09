@@ -32,3 +32,8 @@ Output =
 
 Brahima Dibassi\
 L3 Informatique
+
+# Presentation 13 Decembre 2021
+15 minute au Total
+Une diapo = 3 min
+Eviter le Texte
