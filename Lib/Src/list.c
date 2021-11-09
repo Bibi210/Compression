@@ -8,6 +8,7 @@ list_t init_list(size_t data_size, int (*comp_func)(void *, void *),
     free_func = free;
   list_t output = {data_size, 0, NULL, free_func, comp_func};
   if (output.comp_func == NULL) {
+    //! if two type have same size bug
     if (output.data_size == sizeof(int)) {
       output.comp_func = int_equal;
     }

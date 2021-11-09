@@ -8,6 +8,7 @@
 #define FALSE -1
 
 Image *image;
+// Image Size = 786432
 list_t Graphe;
 
 int Init(char *s) {
@@ -57,7 +58,15 @@ typedef struct Region { //* Composente Connexte
   Color_t Region_Color;
 } Region_t;
 
-int is_in_Region(Pixel_Node_t *Start, int pixel) { //! To test
+void print_region(Region_t reg) {
+  printf("Bords Members :\n");
+  for (size_t i = 0; i < reg.Bords.size; i++) {
+    Pixel_Node_t *pixel = see_elem(&reg.Bords, i);
+    printf("%d\n", pixel->pixel);
+  }
+}
+
+int is_in_Region(Pixel_Node_t *Start, int pixel, list_t *Done) { //! To test
   if (Start == NULL) {
     return FALSE;
   }
@@ -74,8 +83,11 @@ int is_in_Region(Pixel_Node_t *Start, int pixel) { //! To test
   size_t i = 0;
   for (; i < Start->nexts->size; i++) {
     tmp = see_elem(Start->nexts, i);
-    if (is_in_Region(tmp, pixel) == TRUE)
-      return TRUE;
+    if (is_in(Done, &tmp->pixel) == FALSE) {
+      pushfront_elem(Done, &tmp->pixel);
+      if (is_in_Region(tmp, pixel, Done) == TRUE)
+        return TRUE;
+    }
   }
   return FALSE;
 }
@@ -86,16 +98,50 @@ int is_in_Graphe(int pixel) {
 
   size_t i = 0;
   Region_t *tmp;
+  list_t Done = init_list(sizeof(int), NULL, NULL);
   for (; i < Graphe.size; i++) {
     tmp = see_elem(&Graphe, i);
-    if (is_in_Region(tmp->Start, pixel) == TRUE)
+    if (is_in_Region(tmp->Start, pixel, &Done) == TRUE)
       return TRUE;
   }
   return FALSE;
 }
 
-void get_nexts(Pixel_Node_t *current, Color_t Region_Color, list_t *Done) {
-  list_t successors = init_list(sizeof(Pixel_Node_t *), NULL, NULL);
+Pixel_Node_t *find_in_Region(Pixel_Node_t *Start, int pixel,
+                             list_t *Done) { //! To test
+  if (Start == NULL) {
+    return NULL;
+  }
+
+  if (Start->pixel == pixel) {
+    return Start;
+  }
+
+  if (Start->nexts == NULL || Start->nexts->size == 0) {
+    return NULL;
+  }
+
+  Pixel_Node_t *tmp;
+  Pixel_Node_t *output;
+  size_t i = 0;
+  for (; i < Start->nexts->size; i++) {
+    tmp = see_elem(Start->nexts, i);
+    if (is_in(Done, &tmp->pixel) == FALSE) {
+      pushfront_elem(Done, &tmp->pixel);
+      if ((output = find_in_Region(tmp, pixel, Done)) != NULL)
+        return output;
+    }
+  }
+  return NULL;
+}
+
+void get_nexts(Pixel_Node_t *current, Color_t Region_Color, list_t *Done,
+               list_t *Bords) {
+  // TODO (Upgrade) Si index déja existant prendre le pointeur vers cette
+  // index déja existant
+  printf("Processed pixel %llu\n", Done->size);
+  list_t *successors = malloc(sizeof(list_t));
+  *successors = init_list(sizeof(Pixel_Node_t *), NULL, NULL);
   Pixel_Node_t to_add;
   int up, down, left, right;
   up = current->pixel + image->sizeX;
@@ -106,63 +152,53 @@ void get_nexts(Pixel_Node_t *current, Color_t Region_Color, list_t *Done) {
   if (pixel_in_image(up) == TRUE &&
       color_equal(Region_Color, get_pixel_color(up)) == TRUE) {
     to_add.pixel = up;
-    pushfront_elem(&successors, &to_add);
+    pushfront_elem(successors, &to_add);
   }
   if (pixel_in_image(down) == TRUE &&
       color_equal(Region_Color, get_pixel_color(down)) == TRUE) {
     to_add.pixel = down;
-    pushfront_elem(&successors, &to_add);
+    pushfront_elem(successors, &to_add);
   }
   if (pixel_in_image(left) == TRUE &&
       color_equal(Region_Color, get_pixel_color(left)) == TRUE) {
     to_add.pixel = left;
-    pushfront_elem(&successors, &to_add);
+    pushfront_elem(successors, &to_add);
   }
   if (pixel_in_image(right) == TRUE &&
       color_equal(Region_Color, get_pixel_color(right)) == TRUE) {
     to_add.pixel = right;
-    pushfront_elem(&successors, &to_add);
+    pushfront_elem(successors, &to_add);
   }
 
   Pixel_Node_t *tmp;
-  for (size_t i = 0; i < successors.size; i++) {
-    tmp = see_elem(&successors, i);
+  for (size_t i = 0; i < successors->size; i++) {
+    tmp = see_elem(successors, i);
     if (is_in(Done, &tmp->pixel) == FALSE) {
-      printf("Yolo");
       pushfront_elem(Done, &tmp->pixel);
-      get_nexts(tmp, Region_Color, Done);
+      get_nexts(tmp, Region_Color, Done, Bords);
     }
   }
-  current->nexts = &successors;
-
+  current->nexts = successors;
+  if (current->nexts->size < 4)
+    pushfront_elem(Bords, &current->pixel);
   return;
 }
 
-Region_t get_new() {
+Region_t get_new(int start_pixel) {
   list_t Done = init_list(sizeof(int), NULL, NULL);
-  Pixel_Node_t Start;
+  Pixel_Node_t *Start = malloc(sizeof(Pixel_Node_t));
   Region_t output;
-  int start_pixel;
-  long long size;
+
   srand(time(NULL));
-  do { // Change Prendre premier pas in Graphe
-    do {
-      start_pixel = rand() % (image->sizeX * image->sizeY);
-    } while (!is_in_Graphe(start_pixel));
-    Start.pixel = start_pixel;
-    output.Region_Color = get_pixel_color(start_pixel);
-    output.Bords = init_list(sizeof(int), NULL, NULL);
-    output.Start = &Start;
+  Start->pixel = start_pixel;
+  output.Region_Color = get_pixel_color(start_pixel);
+  output.Bords = init_list(sizeof(int), NULL, NULL);
+  output.Start = Start;
 
-    get_nexts(output.Start, output.Region_Color, &Done); 
-    //TODO (Upgrade) Si index déja existant prendre le pointeur vers cette index déja existant
-    printf("successors = %llu\n", size = output.Start->nexts->size);
+  pushfront_elem(&Done, &output.Start->pixel);
+  get_nexts(output.Start, output.Region_Color, &Done, &output.Bords);
 
-    output.Start = &Start;
-
-  } while (size != 4);
-  // TODO Durant le Parcours ajouter dans Bords les noeud avec moins de 4
-  // connections
+  print_region(output);
 
   return output;
 }
@@ -178,6 +214,11 @@ int main(int argc, char **argv) {
     exit(0);
   };
   Graphe = init_list(sizeof(Region_t), NULL, NULL);
-  Region_t in_build = get_new();
-  pushfront_elem(&Graphe, &in_build);
+  int start_pixel = 0;
+  for (; start_pixel < (image->sizeX * image->sizeY); start_pixel++) {
+    if (is_in_Graphe(start_pixel) == FALSE) {
+      Region_t in_build = get_new(start_pixel);
+      pushfront_elem(&Graphe, &in_build);
+    }
+  }
 }
