@@ -22,6 +22,7 @@ void free_list(list_t *list) {
     temp = i;
     i = i->next;
     free_node(temp, list->free_func);
+    list->size--;
   }
 }
 
@@ -50,8 +51,21 @@ void pushfront_elem(list_t *list, void *data) {
   list->size++;
 }
 
+void pushfront_elem_no_cpy(list_t *list, void *data) {
+  Node_t *tmp, *node;
+  node = malloc(sizeof(Node_t));
+  assert(node);
+
+  node->data = data;
+
+  tmp = list->first;
+  list->first = node;
+  list->first->next = tmp;
+
+  list->size++;
+}
+
 void append_elem(list_t *list, void *data) {
-  //! Au dev de choisir de free data ou non
   Node_t *i, *node;
   node = create_node(data, list->data_size);
 
@@ -93,6 +107,24 @@ void remove_elem(list_t *list, llu index) {
   free_node(i, list->free_func);
 }
 
+void remove_elem_no_free(list_t *list, llu index) {
+  Node_t *i, *tmp;
+  list->size--;
+  if (!index) {
+    tmp = list->first;
+    list->first = list->first->next;
+    free(tmp);
+    tmp = NULL;
+    return;
+  }
+
+  for (i = list->first; i->next != NULL && index; i = i->next, index--)
+    tmp = i;
+  tmp->next = i->next;
+  free(i);
+  i = NULL;
+}
+
 void insert_elem(list_t *list, void *data, llu index) {
   Node_t *i, *tmp, *node;
   if (index == 0) {
@@ -122,8 +154,11 @@ void *see_elem(list_t *list, llu index) {
 }
 
 void free_node(Node_t *node, void (*free_func)(void *)) {
-  free_func(node->data);
-  free(node);
+  if (node) {
+    free_func(node->data);
+    free(node);
+    node = NULL;
+  }
 }
 
 llu get_smallest_index(list_t *list) {

@@ -17,16 +17,26 @@ void add_long(void *a) {
 }
 
 int main(int argc, char **argv) {
-  int nb;
+  long long nb;
   long to_push;
+  long test;
   srand(time(NULL));
   list_t test_A = init_list(sizeof(long), cmp_long, free);
-  for (nb = 0; nb < 100; nb++) {
+  time_t t0 = time(NULL);
+  long max = 100;
+  for (nb = 0; nb < max; nb++) {
     to_push = nb;
-    append_elem(&test_A, &to_push); 
+    test = max - nb;
+    pushfront_elem(&test_A, &to_push);
+    printf("%llu\n", nb);
+   // is_in(&test_A, &test);  //! Slow down this shit  : 
   }
-  foreach (&test_A, add_long);
-  printf("%d\n", some(&test_A, some_tst));
+  time_t t1 = time(NULL);
+  printf("Durée = %f\n", difftime(t1, t0));
+
   free_list(&test_A);
+
   return EXIT_SUCCESS;
 }
+
+//TODO Fill Line by Line Bords A to Bords B
