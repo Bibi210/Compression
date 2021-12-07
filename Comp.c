@@ -5,7 +5,6 @@ Image *image;
 list_t Graphe;
 Pixel_Node_t **Seen;
 list_t Stack;
-
 int delta;
 
 int is_color_equal(const Color_t a, const Color_t b) {
@@ -93,61 +92,12 @@ void set_pixel_succesors(Pixel_Node_t *current, Color_t Region_Color,
       if (!is_in_Graphe(((Pixel_Node_t *)see_elem(current->nexts, i))->pixel))
         pushfront_elem_no_cpy(&Stack, see_elem(current->nexts, i));
     }
-    if (current->nexts->size < 4) {
+
+    //Bords Easy Reacherche
+     if (current->nexts->size < 4) {
       pushfront_elem_no_cpy(Bords, &current->pixel);
-    }
+    } 
   }
-}
-
-
-
-int main(int argc, char **argv) {
-  // TODO les frees
-  if (argc < 3) {
-    fprintf(stderr, "Usage : Comp FileName Equal_Delta\n");
-    exit(0);
-  }
-
-  if (Init(argv[1]) == EXIT_FAILURE) {
-    fprintf(stderr, "Image initialization Failed\n");
-    exit(0);
-  };
-
-  delta = atoi(argv[2]);
-
-  Seen = malloc(sizeof(Pixel_Node_t *) * image->image_size);
-  Stack = init_list(sizeof(Pixel_Node_t *), NULL, NULL);
-  for (size_t i = 0; i < image->image_size; i++) {
-    Seen[i] = NULL;
-  }
-
-  Graphe = init_list(sizeof(Region_t *), NULL, NULL);
-  int start_pixel = 0;
-  int new_img_size = 0;
-  for (; (unsigned)start_pixel < image->image_size; start_pixel++) {
-    if (!is_in_Graphe(start_pixel)) {
-      Region_t *in_build = init_region(start_pixel);
-      pushfront_elem(&Graphe, in_build);
-      new_img_size += in_build->Bords->size;
-      /* for (size_t i = 0; i < in_build->Bords->size; i++) {
-          Pixel_Node_t *tmp = see_elem(in_build->Bords, i);
-          Color_t black = {0, 255, 0};
-          set_pixel_color(tmp->pixel, black);
-        }  */
-    }
-  }
-  /* for (size_t i = 0; i < image->image_size; i++)
-    Seen[i] = NULL;
-
-  for (size_t i = 0; i < Graphe.size; i++) {
-    Region_t *in_build = (Region_t *)see_elem(&Graphe, i);
-    get_region_bords(in_build);
-  } */
-
-  printf("Image Base Pixels = %lu\n", image->image_size);
-  printf("Image Stocked Pixels = %d\n", new_img_size);
-  printf("Gain = %lu\n", image->image_size - new_img_size);
-  imagesave_PPM("demo_comp.ppm", image);
 }
 
 // Basic and Utils Functions
@@ -187,35 +137,86 @@ void Display_Pixel(Pixel_Node_t *to_print) {
     }
   }
 }
+// Basic and Utils Functions
 
-
-void get_region_bords(Region_t *to_proccess) { 
-  //! TODO FIND A WAY TO DEBUG
+void get_region_bords(Region_t *to_proccess) {
   pushfront_elem_no_cpy(&Stack, to_proccess->Start);
-  
+
   while (Stack.size) {
     Pixel_Node_t *current_node = see_elem(&Stack, 0);
-   // Display_Pixel(current_node);
+    // Display_Pixel(current_node);
 
     remove_elem_no_free(&Stack, 0);
 
     if (!is_in_Graphe(current_node->pixel)) {
       Seen[current_node->pixel] = current_node;
 
-     /*  //! Bug 1
-      if (current_node->nexts->size < 4)
-        pushfront_elem(to_proccess->Bords, &current_node->pixel);
-      //! Bug 1 */
+      /*  //! Bug 1
+       if (current_node->nexts->size < 4)
+         pushfront_elem(to_proccess->Bords, &current_node->pixel);
+      */ //! Bug 1
 
-      //! Bug 2
+      /* //! Bug 2
       for (size_t i = 0; i < current_node->nexts->size; i++) {
         if (!is_in_Graphe(
                 ((Pixel_Node_t *)(see_elem(current_node->nexts, i)))->pixel)) {
           pushfront_elem_no_cpy(&Stack, see_elem(current_node->nexts, i));
         }
       }
-      //! Bug 2
-
+      */ //! Bug 2
     }
   }
+}
+int main(int argc, char **argv) {
+  // TODO les frees
+  if (argc < 3) {
+    fprintf(stderr, "Usage : Comp FileName Equal_Delta\n");
+    exit(0);
+  }
+
+  if (Init(argv[1]) == EXIT_FAILURE) {
+    fprintf(stderr, "Image initialization Failed\n");
+    exit(0);
+  };
+  // Globals Initiatilisation
+  delta = atoi(argv[2]);
+  Seen = malloc(sizeof(Pixel_Node_t *) * image->image_size);
+  Stack = init_list(sizeof(Pixel_Node_t *), NULL, NULL);
+  for (size_t i = 0; i < image->image_size; i++) {
+    Seen[i] = NULL;
+  }
+  Graphe = init_list(sizeof(Region_t *), NULL, NULL);
+  // Globals Initiatilisation
+
+  // Graph Creation
+  int start_pixel = 0;
+  int new_img_size = 0;
+  for (; (unsigned)start_pixel < image->image_size; start_pixel++) {
+    if (!is_in_Graphe(start_pixel)) {
+      Region_t *in_build = init_region(start_pixel);
+      pushfront_elem(&Graphe, in_build);
+      new_img_size += in_build->Bords->size;
+      /* for (size_t i = 0; i < in_build->Bords->size; i++) {
+          Pixel_Node_t *tmp = see_elem(in_build->Bords, i);
+          Color_t black = {0, 255, 0};
+          set_pixel_color(tmp->pixel, black);
+        }  */
+    }
+  }
+  // Graph Creation
+
+  // Bords Recherch
+  /* for (size_t i = 0; i < image->image_size; i++)
+    Seen[i] = NULL;
+
+  for (size_t i = 0; i < Graphe.size; i++) {
+    Region_t *in_build = (Region_t *)see_elem(&Graphe, i);
+    get_region_bords(in_build);
+  } */
+  // Bords Recherch
+
+  printf("Image Base Pixels = %lu\n", image->image_size);
+  printf("Image Stocked Pixels = %d\n", new_img_size);
+  printf("Gain = %lu\n", image->image_size - new_img_size);
+  imagesave_PPM("demo_comp.ppm", image);
 }

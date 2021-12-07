@@ -35,3 +35,4 @@ typedef struct Region { //* Composente Connexte
 } Region_t;
 Region_t* init_region(int start_pixel);
 void print_region(Region_t reg);
+
