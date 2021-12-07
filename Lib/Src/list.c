@@ -31,6 +31,7 @@ void free_list(list_t *list) {
     free_node(temp, list->free_func);
     list->size--;
   }
+  list->first = NULL;
 }
 
 Node_t *create_node(void *data, size_t data_size) {
@@ -64,6 +65,8 @@ void pushfront_elem_no_cpy(list_t *list, void *data) {
   assert(node);
 
   node->data = data;
+  assert(node->data);
+  node->next = NULL;
 
   tmp = list->first;
   list->first = node;

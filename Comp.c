@@ -58,6 +58,7 @@ Region_t *init_region(int start_pixel) {
     remove_elem_no_free(&Stack, 0);
     set_pixel_succesors(to_proccess, output->Region_Color, output->Bords);
   }
+  free_list(&Stack);
 
   return output;
 }
@@ -98,25 +99,7 @@ void set_pixel_succesors(Pixel_Node_t *current, Color_t Region_Color,
   }
 }
 
-/* void get_region_bords(Region_t *to_proccess) { //! TODO FIND A WAY TO DEBUG
-THIS pushfront_elem_no_cpy(&Stack, to_proccess->Start); while (Stack.size) {
-    Pixel_Node_t *current_node = see_elem(&Stack, 0);
-    remove_elem_no_free(&Stack, 0);
-    if (!is_in_Graphe(current_node->pixel)) {
-      Seen[current_node->pixel] = current_node;
 
-      if (current_node->nexts->size < 4)
-        pushfront_elem_no_cpy(to_proccess->Bords, &current_node->pixel);
-
-      for (size_t i = 0; i < current_node->nexts->size; i++) {
-        if (!is_in_Graphe(
-                ((Pixel_Node_t *)(see_elem(current_node->nexts, i)))->pixel)) {
-          pushfront_elem_no_cpy(&Stack, see_elem(current_node->nexts, i));
-        }
-      }
-    }
-  }
-} */
 
 int main(int argc, char **argv) {
   // TODO les frees
@@ -153,10 +136,10 @@ int main(int argc, char **argv) {
         }  */
     }
   }
-  for (size_t i = 0; i < image->image_size; i++)
+  /* for (size_t i = 0; i < image->image_size; i++)
     Seen[i] = NULL;
 
- /*  for (size_t i = 0; i < Graphe.size; i++) {
+  for (size_t i = 0; i < Graphe.size; i++) {
     Region_t *in_build = (Region_t *)see_elem(&Graphe, i);
     get_region_bords(in_build);
   } */
@@ -194,8 +177,45 @@ void Display_Color(Color_t color) {
   printf("R : %d | G : %d | B : %d\n", color.Red, color.Green, color.Blue);
 }
 void Display_Pixel(Pixel_Node_t *to_print) {
-  if (to_print != NULL) {
-    printf("Pixel Index : %d\n", to_print->pixel);
-    get_pixel_color(to_print->pixel);
+  printf("Pixel Index : %d\n", to_print->pixel);
+  if (to_print->nexts == NULL) {
+    puts("No next");
+  } else {
+    for (int i = 0; i < to_print->nexts->size; i++) {
+      printf("Child %d Index : %d\n", i,
+             ((Pixel_Node_t *)see_elem(to_print->nexts, i))->pixel);
+    }
+  }
+}
+
+
+void get_region_bords(Region_t *to_proccess) { 
+  //! TODO FIND A WAY TO DEBUG
+  pushfront_elem_no_cpy(&Stack, to_proccess->Start);
+  
+  while (Stack.size) {
+    Pixel_Node_t *current_node = see_elem(&Stack, 0);
+   // Display_Pixel(current_node);
+
+    remove_elem_no_free(&Stack, 0);
+
+    if (!is_in_Graphe(current_node->pixel)) {
+      Seen[current_node->pixel] = current_node;
+
+     /*  //! Bug 1
+      if (current_node->nexts->size < 4)
+        pushfront_elem(to_proccess->Bords, &current_node->pixel);
+      //! Bug 1 */
+
+      //! Bug 2
+      for (size_t i = 0; i < current_node->nexts->size; i++) {
+        if (!is_in_Graphe(
+                ((Pixel_Node_t *)(see_elem(current_node->nexts, i)))->pixel)) {
+          pushfront_elem_no_cpy(&Stack, see_elem(current_node->nexts, i));
+        }
+      }
+      //! Bug 2
+
+    }
   }
 }

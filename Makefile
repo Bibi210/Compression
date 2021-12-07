@@ -21,7 +21,7 @@ GL_LDFLAGS = -lGL -lglut -lGLU
 endif
 
 CC = gcc
-CFLAGS := -Wall -g -finline-functions -funroll-loops  -mtune=native -flto -O3
+CFLAGS := -Wall -g
 LDFLAGS = -lm $(GL_LDFLAGS)
 EXE := Decomp Comp Afficher
 
@@ -38,5 +38,6 @@ ppm.o: Lib/ima.h
 
 clean:
 	$(RM) $(EXE) *~ $(shell find . -name "*.o")
+	$(RM) -rf *.dSYM
 
 .PHONY: all clean
