@@ -21,7 +21,7 @@ GL_LDFLAGS = -lGL -lglut -lGLU
 endif
 
 CC = gcc
-CFLAGS := -Wall -Wextra -g
+CFLAGS := -Wall -g -finline-functions -funroll-loops  -mtune=native -flto -O3
 LDFLAGS = -lm $(GL_LDFLAGS)
 EXE := Decomp Comp Afficher
 

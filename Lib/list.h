@@ -19,6 +19,8 @@ typedef struct list {
 
 list_t init_list(size_t data_size, int (*comp_func)(void *, void *),
                  void (*free_func)(void *));
+list_t *init_list_ptr(size_t data_size, int (*comp_func)(void *, void *),
+                      void (*free_func)(void *));
 void *see_elem(list_t *list, llu index); //! Untested
 void insert_elem(list_t *list, void *data, llu index);
 void remove_elem(list_t *list, llu index);

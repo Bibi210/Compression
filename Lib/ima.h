@@ -14,6 +14,7 @@
 struct Image {
   unsigned long sizeX;
   unsigned long sizeY;
+  unsigned long image_size;
   GLubyte *data;
 };
 typedef struct Image Image;

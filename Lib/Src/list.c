@@ -7,12 +7,19 @@ list_t init_list(size_t data_size, int (*comp_func)(void *, void *),
   if (free_func == NULL)
     free_func = free;
   list_t output = {data_size, 0, NULL, free_func, comp_func};
-  if (output.comp_func == NULL) {
-    //! if two type have same size bug
-    if (output.data_size == sizeof(int)) {
-      output.comp_func = int_equal;
-    }
-  }
+  return output;
+}
+
+list_t *init_list_ptr(size_t data_size, int (*comp_func)(void *, void *),
+                      void (*free_func)(void *)) {
+  if (free_func == NULL)
+    free_func = free;
+  list_t *output = malloc(sizeof(list_t));
+  output->data_size = data_size;
+  output->comp_func = comp_func;
+  output->free_func = free_func;
+  output->first = NULL;
+  output->size = 0;
   return output;
 }
 
