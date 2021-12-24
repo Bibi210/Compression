@@ -29,14 +29,13 @@ int main(int argc, char **argv) {
     test = max - nb;
     pushfront_elem(&test_A, &to_push);
     printf("%llu\n", nb);
-   // is_in(&test_A, &test);  //! Slow down this shit  : 
+    // is_in(&test_A, &test);  //! Slow down this shit  :
   }
   time_t t1 = time(NULL);
   printf("Durée = %f\n", difftime(t1, t0));
 
   free_list(&test_A);
-
   return EXIT_SUCCESS;
 }
 
-//TODO Fill Line by Line Bords A to Bords B
+// TODO Fill Line by Line Bords A to Bords B
