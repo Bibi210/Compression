@@ -76,12 +76,8 @@ int write_unsigned_int(FILE *to_write_in, uint32_t to_reduce) {
 }
 
 int write_img_size(FILE *to_write) {
-  uint32_t reduced = image->sizeX << 12;
-  reduced |= image->sizeY;
-  if (fwrite(&reduced, sizeof(uint8_t), 3, to_write) != 3) {
-    perror("Failed to write image sizes");
-    return FALSE;
-  }
+  write_unsigned_int(to_write, image->sizeX);
+  write_unsigned_int(to_write, image->sizeY);
   return TRUE;
 }
 
@@ -175,7 +171,6 @@ int main(int argc, char **argv) {
   }
 
   for (size_t i = 0; i < image->image_size; i++) {
-
     set_suivants(Graphe[i].node);
   }
 

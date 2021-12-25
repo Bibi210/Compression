@@ -3,32 +3,8 @@
 
 Image *image;
 
-int read_image_sizes(FILE *fp) {
-  uint8_t *read_bytes = malloc(sizeof(uint8_t) * 3);
-  uint32_t tmp;
-  if (fread(read_bytes, sizeof(uint8_t), 3, fp) != 3) {
-    free(read_bytes);
-    perror("Failed to read image sizes.");
-    return FALSE;
-  }
-  tmp = *(uint32_t *)read_bytes;
-  free(read_bytes);
-
-  image->sizeX = tmp >> 12;
-  image->sizeY = (tmp << 20) >> 20;
-  image->image_size = image->sizeX * image->sizeY;
-  image->data = calloc(image->sizeX * image->sizeY, sizeof(GLubyte));
-  return TRUE;
-}
-
-void set_pixel_color(Color_t color, int pixel) {
-  image->data[(pixel * 3)] = color.Red;
-  image->data[(pixel * 3) + 1] = color.Green;
-  image->data[(pixel * 3) + 2] = color.Blue;
-}
-
 int read_unsigned_int(FILE *fp, uint32_t *dst) {
-  uint8_t *read_bytes = malloc(sizeof(uint8_t) * 3);
+  uint8_t *read_bytes = calloc(3, sizeof(uint8_t));
   if (fread(read_bytes, sizeof(uint8_t), 3, fp) != 3) {
     free(read_bytes);
     perror("Failed to read unsigned int.");
@@ -37,6 +13,22 @@ int read_unsigned_int(FILE *fp, uint32_t *dst) {
   *dst = *(uint32_t *)read_bytes;
   free(read_bytes);
   return TRUE;
+}
+
+int read_image_sizes(FILE *fp) {
+  uint32_t tmp;
+  read_unsigned_int(fp, &tmp);
+  image->sizeX = tmp;
+  read_unsigned_int(fp, &tmp);
+  image->sizeY = tmp;
+  image->data = calloc(image->sizeX * image->sizeY, sizeof(GLubyte));
+  return TRUE;
+}
+
+void set_pixel_color(Color_t color, int pixel) {
+  image->data[(pixel * 3)] = color.Red;
+  image->data[(pixel * 3) + 1] = color.Green;
+  image->data[(pixel * 3) + 2] = color.Blue;
 }
 
 int ReadRegion(FILE *fp, Region_t *dst) {
@@ -79,8 +71,8 @@ int ReadGraph(FILE *fp, list_t *Graph) {
 
 int main(int argc, char **argv) {
   image = malloc(sizeof(Image));
-  if (argc < 2) {
-    fprintf(stderr, "Usage : Decomp FileName\n");
+  if (argc < 2 || strcmp("Compressed", get_filename_ext(argv[1]))) {
+    fprintf(stderr, "Usage : Decomp FileName.Compressed\n");
     exit(0);
   }
   FILE *to_decom = fopen(argv[1], "rb");
