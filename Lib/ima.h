@@ -12,9 +12,9 @@
 #endif
 
 struct Image {
-  unsigned long sizeX;
-  unsigned long sizeY;
-  unsigned long image_size;
+  uint32_t sizeX;
+  uint32_t sizeY;
+  uint32_t image_size;
   GLubyte *data;
 };
 typedef struct Image Image;

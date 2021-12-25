@@ -1,58 +1,21 @@
-#include "Lib/ima.h"
-#include <assert.h>
-#define MAX 4096 * 4096
+#include "Headers/Comp.h"
 Image *image;
-int delta;
-
-#define TRUE 1
-#define FALSE 0
-
-typedef struct Color {
-  GLubyte Red, Green, Blue;
-} Color_t;
-void Display_Color(Color_t color) {
-  printf("R : %d | G : %d | B : %d\n", color.Red, color.Green, color.Blue);
-}
-
-int is_color_equal(const Color_t a, const Color_t b) {
-  int current_delta = 0;
-  current_delta += abs(a.Blue - b.Blue);
-  current_delta += abs(a.Red - b.Red);
-  current_delta += abs(a.Red - b.Red);
-  if (current_delta <= delta)
-    return TRUE;
-
-  return FALSE;
-}
-struct Pixel_Node {
-  int num;
-  Color_t color;
-  int nbs;
-  struct aretes *nexts;
-};
-typedef struct Pixel_Node Pixel_Node_t;
-typedef Pixel_Node_t *Pt_Pixel;
-int is_pixel_in_image(int pixel) {
-  if (pixel < 0 || (unsigned)pixel >= image->image_size)
-    return FALSE;
-  return TRUE;
-}
-
-struct G_node {
-  int vu;
-  Pt_Pixel node;
-};
-typedef struct G_node G_node_t;
-typedef struct G_node *legraphe;
 legraphe Graphe;
 
-struct aretes {
-  Pt_Pixel pt;
-  float poids;
-  struct aretes *suiv;
-};
-typedef struct aretes aretes;
-typedef struct aretes *ptarete;
+Color_t get_pixel_color(int pixel) {
+  Color_t output = {image->data[(pixel * 3)], image->data[(pixel * 3) + 1],
+                    image->data[(pixel * 3) + 2]};
+  return output;
+}
+
+void Display_Pixel(Pixel_Node_t *to_print) {
+  printf("Pixel Index : %d\n", to_print->num);
+  Display_Color(to_print->color);
+  for (ptarete i = to_print->nexts; i != NULL; i = i->suiv) {
+    printf("Succsesor index = %d |", i->pt->num);
+  }
+  printf("\n");
+}
 
 void add_next(Pt_Pixel node, int next_pixel) {
   ptarete new_succ = malloc(sizeof(aretes));
@@ -68,9 +31,10 @@ void set_suivants(Pt_Pixel px) {
   suivants[1] = px->num - image->sizeX;
   suivants[2] = px->num + 1;
   suivants[3] = px->num - 1;
+
   for (size_t i = 0; i < 4; i++) {
-    if (is_pixel_in_image(suivants[i]) &&
-        is_color_equal(px->color, Graphe[suivants[i]].node->color)) {
+    if (is_pixel_in_image(suivants[i], image->image_size) == TRUE &&
+        is_color_equal(px->color, Graphe[suivants[i]].node->color) == TRUE) {
       add_next(px, suivants[i]);
     }
   }
@@ -86,20 +50,6 @@ int Init(char *s) {
     return EXIT_FAILURE;
   printf("tailles %d %d\n", (int)image->sizeX, (int)image->sizeY);
   return EXIT_SUCCESS;
-}
-Color_t get_pixel_color(int pixel) {
-  Color_t output = {image->data[(pixel * 3)], image->data[(pixel * 3) + 1],
-                    image->data[(pixel * 3) + 2]};
-  return output;
-}
-
-void Display_Pixel(Pixel_Node_t *to_print) {
-  printf("Pixel Index : %d\n", to_print->num);
-  Display_Color(to_print->color);
-  for (ptarete i = to_print->nexts; i != NULL; i = i->suiv) {
-    printf("Succsesor index = %d |", i->pt->num);
-  }
-  printf("\n");
 }
 
 void Free_All() {
@@ -117,21 +67,103 @@ void Free_All() {
   free(image);
 }
 
+int write_unsigned_int(FILE *to_write_in, uint32_t to_reduce) {
+  if (fwrite(&to_reduce, sizeof(uint8_t), 3, to_write_in) != 3) {
+    perror("Failed to an unsigned integer");
+    return FALSE;
+  }
+  return TRUE;
+}
 
+int write_img_size(FILE *to_write) {
+  uint32_t reduced = image->sizeX << 12;
+  reduced |= image->sizeY;
+  if (fwrite(&reduced, sizeof(uint8_t), 3, to_write) != 3) {
+    perror("Failed to write image sizes");
+    return FALSE;
+  }
+  return TRUE;
+}
+
+int Writecolor(FILE *dest, Color_t color) {
+  if (fwrite(&color, sizeof(Color_t), 1, dest) != TRUE) {
+    perror("Failed to write color");
+    return FALSE;
+  }
+  return TRUE;
+}
+
+void WriteRegion(FILE *file, Region_t *to_write) {
+  uint32_t current_px_index;
+  if (Writecolor(file, to_write->color) == FALSE) {
+    fprintf(stderr, "Failed to write region color to file");
+    exit(EXIT_FAILURE);
+  }
+  if (write_unsigned_int(file, to_write->bords.size) == FALSE) {
+    fprintf(stderr, "Failed to write region bords size to file");
+    exit(EXIT_FAILURE);
+  }
+  for (size_t i = to_write->bords.size - 1; i != -1; i--) {
+    current_px_index = *(int *)see_elem(&to_write->bords, i);
+    if (write_unsigned_int(file, current_px_index) == FALSE) {
+      fprintf(stderr, "Failed to write a pixel");
+    }
+  }
+}
+
+void build_reg(Region_t *to_build, int current_px, list_t *stack) {
+  if (Graphe[current_px].node->nbs < 4) {
+    pushfront_elem(&to_build->bords, &current_px);
+  }
+  for (ptarete i = Graphe[current_px].node->nexts; i; i = i->suiv) {
+    pushfront_elem(stack, &i->pt->num);
+  }
+}
+
+void find_bords(Region_t *to_build, int start) {
+  list_t stack = init_list(sizeof(int), NULL, NULL);
+  int elem;
+  Color_t tmp_color;
+  unsigned long long R = 0, G = 0, B = 0;
+  pushfront_elem(&stack, &start);
+  for (size_t i = 0; stack.size; i++) {
+    elem = *(int *)see_elem(&stack, 0);
+    remove_elem(&stack, 0);
+    if (Graphe[elem].vu == FALSE) {
+      build_reg(to_build, elem, &stack);
+      Graphe[elem].vu = TRUE;
+      to_build->reg_size++;
+      tmp_color = get_pixel_color(elem);
+      R += tmp_color.Red;
+      G += tmp_color.Green;
+      B += tmp_color.Blue;
+    }
+  }
+  tmp_color.Red = R / to_build->reg_size;
+  tmp_color.Green = G / to_build->reg_size;
+  tmp_color.Blue = B / to_build->reg_size;
+  to_build->color = tmp_color;
+  free_list(&stack);
+}
 
 int main(int argc, char **argv) {
+  char *filename = argv[1];
+  char *comp_filename = malloc(strlen(filename) + 20);
+  strncpy(comp_filename, filename, strcspn(filename, "."));
+  strcat(comp_filename, ".Compressed");
+
   if (argc < 3) {
     fprintf(stderr, "Usage : Comp FileName Equal_Delta\n");
     exit(0);
   }
-  if (Init(argv[1]) == EXIT_FAILURE) {
+  if (Init(filename) == EXIT_FAILURE) {
     fprintf(stderr, "Image initialization Failed\n");
     exit(0);
   }
-  delta = atoi(argv[2]);
-
+  set_delta(atoi(argv[2]));
   Graphe = malloc(sizeof(struct G_node) * image->image_size);
   assert(Graphe);
+
   for (size_t i = 0; i < image->image_size; i++) {
     Graphe[i].vu = FALSE;
     Graphe[i].node = malloc(sizeof(Pixel_Node_t));
@@ -143,12 +175,30 @@ int main(int argc, char **argv) {
   }
 
   for (size_t i = 0; i < image->image_size; i++) {
+
     set_suivants(Graphe[i].node);
   }
 
+  FILE *fp = fopen(comp_filename, "wb+");
+  if (fp == NULL) {
+    perror("File Compression File Open Error : ");
+    Free_All();
+    exit(-1);
+  }
+  write_img_size(fp);
   for (size_t i = 0; i < image->image_size; i++) {
-    Display_Pixel(Graphe[i].node);
+    if (Graphe[i].vu == FALSE) {
+      Region_t in_build;
+      in_build.reg_size = 0;
+      in_build.bords = init_list(sizeof(int), NULL, NULL);
+      find_bords(&in_build, i);
+      if (in_build.bords.size > 3) {
+        WriteRegion(fp, &in_build);
+      }
+      free_list(&in_build.bords);
+    }
   }
 
+  fclose(fp);
   Free_All();
 }

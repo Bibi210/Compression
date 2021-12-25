@@ -208,9 +208,10 @@ int is_in(list_t *list, void *to_find) {
   return -1;
 }
 
-void foreach (list_t *list, void (*to_apply)(void *)) {
+void foreach (list_t *list, void (*to_apply)(void *, void *),
+              void *func_params) {
   for (size_t i = 0; i < list->size; i++) {
-    to_apply(see_elem(list, i));
+    to_apply(see_elem(list, i), func_params);
   }
 }
 

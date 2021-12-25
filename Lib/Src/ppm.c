@@ -35,7 +35,7 @@ int ImageLoad_PPM(char *filename, Image *img) {
   }
   ungetc(c, fp);
   // read image size information
-  if (fscanf(fp, "%lu %lu", &img->sizeX, &img->sizeY) != 2) {
+  if (fscanf(fp, "%u %u", &img->sizeX, &img->sizeY) != 2) {
     fprintf(stderr, "Invalid image size (error loading '%s')\n", filename);
     exit(1);
   }
@@ -86,7 +86,7 @@ void imagesave_PPM(char *filename, Image *img) {
   fprintf(fp, "# Created by %s\n", CREATOR);
 
   // image size
-  fprintf(fp, "%lu %lu\n", img->sizeX, img->sizeY);
+  fprintf(fp, "%u %u\n", img->sizeX, img->sizeY);
 
   // rgb component depth
   fprintf(fp, "%d\n", RGB_COMPONENT_COLOR);

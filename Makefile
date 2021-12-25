@@ -27,14 +27,14 @@ EXE := Decomp Comp Afficher
 
 all: $(EXE)
 
-Comp: Lib/Src/list.o Lib/Src/ppm.o
-Decomp: Lib/Src/list.o Lib/Src/ppm.o 
+Comp: Lib/Src/list.o Lib/Src/ppm.o Lib/Src/Shared_Comp_Decomp.o
+Decomp: Lib/Src/list.o Lib/Src/ppm.o Lib/Src/Shared_Comp_Decomp.o
 Afficher: Lib/Src/ppm.o 
 
 
 list.o: Lib/list.h
 ppm.o: Lib/ima.h
-
+Shared_Comp_Decomp.o: Lib/Shared_Comp_Decomp.h
 
 clean:
 	$(RM) $(EXE) *~ $(shell find . -name "*.o")
