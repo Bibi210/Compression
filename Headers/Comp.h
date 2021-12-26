@@ -5,9 +5,6 @@ int Init(char *s);
 // Write integers < 4096 * 4096
 int write_unsigned_int(FILE *to_write_in, uint32_t to_reduce);
 
-// Write image Sizes must be (X < 4096) (Y < 4096)
-int write_img_size(FILE *to_write);
-
 void Free_All();
 
 int Writecolor(FILE *dest, Color_t color);

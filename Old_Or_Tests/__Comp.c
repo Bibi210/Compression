@@ -1,4 +1,3 @@
-#include "Headers/_Comp.h"
 #include <stdlib.h>
 
 Image *image;

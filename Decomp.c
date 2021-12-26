@@ -2,6 +2,13 @@
 #include <stdio.h>
 
 Image *image;
+Color_t orange = {72, 31, 55};
+
+void set_pixel_color(Color_t color, int pixel) {
+  image->data[(pixel * 3)] = color.Red;
+  image->data[(pixel * 3) + 1] = color.Green;
+  image->data[(pixel * 3) + 2] = color.Blue;
+}
 
 int read_unsigned_int(FILE *fp, uint32_t *dst) {
   uint8_t *read_bytes = calloc(3, sizeof(uint8_t));
@@ -17,18 +24,20 @@ int read_unsigned_int(FILE *fp, uint32_t *dst) {
 
 int read_image_sizes(FILE *fp) {
   uint32_t tmp;
-  read_unsigned_int(fp, &tmp);
+  if (read_unsigned_int(fp, &tmp) == FALSE) {
+    fprintf(stderr, "Failed to read image sizeX");
+    exit(-1);
+  }
   image->sizeX = tmp;
-  read_unsigned_int(fp, &tmp);
+  if (read_unsigned_int(fp, &tmp) == FALSE) {
+    fprintf(stderr, "Failed to read image sizeY");
+    exit(-1);
+  }
   image->sizeY = tmp;
-  image->data = calloc(image->sizeX * image->sizeY, sizeof(GLubyte));
+  image->image_size = image->sizeX * image->sizeY;
+  image->data = calloc(image->image_size * 3, sizeof(GLubyte));
+  
   return TRUE;
-}
-
-void set_pixel_color(Color_t color, int pixel) {
-  image->data[(pixel * 3)] = color.Red;
-  image->data[(pixel * 3) + 1] = color.Green;
-  image->data[(pixel * 3) + 2] = color.Blue;
 }
 
 int ReadRegion(FILE *fp, Region_t *dst) {
@@ -85,9 +94,10 @@ int main(int argc, char **argv) {
   printf("Image SizeX %u | Image SizeY %u \n", image->sizeX, image->sizeY);
 
   list_t Graph = init_list(sizeof(Region_t), NULL, free_reg);
+
   ReadGraph(to_decom, &Graph);
 
-  imagesave_PPM("Output.ppm", image);
+  imagesave_PPM("Demo_Output.ppm", image);
   free(image->data);
   free(image);
   free_list(&Graph);

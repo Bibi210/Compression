@@ -38,6 +38,7 @@ Shared_Comp_Decomp.o: Lib/Shared_Comp_Decomp.h
 
 clean:
 	$(RM) $(EXE) *~ $(shell find . -name "*.o")
+	$(RM) $(EXE) *~ $(shell find . -name "*.Compressed")
 	$(RM) -rf *.dSYM
 	$(RM) -rf demo_comp.ppm
 

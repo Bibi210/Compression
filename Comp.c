@@ -75,12 +75,6 @@ int write_unsigned_int(FILE *to_write_in, uint32_t to_reduce) {
   return TRUE;
 }
 
-int write_img_size(FILE *to_write) {
-  write_unsigned_int(to_write, image->sizeX);
-  write_unsigned_int(to_write, image->sizeY);
-  return TRUE;
-}
-
 int Writecolor(FILE *dest, Color_t color) {
   if (fwrite(&color, sizeof(Color_t), 1, dest) != TRUE) {
     perror("Failed to write color");
@@ -180,14 +174,17 @@ int main(int argc, char **argv) {
     Free_All();
     exit(-1);
   }
-  write_img_size(fp);
+  if (write_unsigned_int(fp, image->sizeX) == FALSE)
+    exit(-1);
+  if (write_unsigned_int(fp, image->sizeY) == FALSE)
+    exit(-1);
   for (size_t i = 0; i < image->image_size; i++) {
     if (Graphe[i].vu == FALSE) {
       Region_t in_build;
       in_build.reg_size = 0;
       in_build.bords = init_list(sizeof(int), NULL, NULL);
       find_bords(&in_build, i);
-      if (in_build.bords.size > 3) {
+      if (in_build.bords.size > 0 /*Modifier Par Taille Mini de Bords accepté*/) {
         WriteRegion(fp, &in_build);
       }
       free_list(&in_build.bords);
