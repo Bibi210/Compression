@@ -85,7 +85,7 @@ int ReadGraph(FILE *fp, list_t *Graph) {
     for (i = 0; i < tmp.bords.size - tmp.solo_pair_count; i += 2) {
       pair_begin = *(uint32_t *)see_elem(&tmp.bords, i);
       pair_end = *(uint32_t *)see_elem(&tmp.bords, i + 1);
-      for (size_t t = pair_begin; t != pair_end; t++) {
+      for (size_t t = pair_begin; t <= pair_end ; t++) {
         set_pixel_color(tmp.color, t);
       }
     }

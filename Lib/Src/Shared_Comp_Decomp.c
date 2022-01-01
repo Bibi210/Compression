@@ -33,7 +33,7 @@ void free_reg(void *to_free) {
 void print_region(Region_t *to_print) {
   puts("Region Display ");
   Display_Color(to_print->color);
-  printf("%llu \n", to_print->bords.size);
+  printf("Nombre de Pixel aux Bords: %llu \n", to_print->bords.size);
   printf("\n");
   for (size_t i = 0; i < to_print->bords.size; i++) {
     printf("|%d", *(int *)see_elem(&to_print->bords, i));

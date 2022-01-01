@@ -3,6 +3,7 @@
 #include <stdio.h>
 Image *image;
 legraphe Graphe;
+Region_t **MergedRegions;
 
 Color_t get_pixel_color(int pixel) {
   Color_t output = {image->data[(pixel * 3)], image->data[(pixel * 3) + 1],
@@ -109,11 +110,20 @@ void WriteRegion(FILE *file, Region_t *to_write) {
 
 void build_reg(Region_t *to_build, int current_px, list_t *stack) {
   if (Graphe[current_px].node->nbs < 4) {
-    Graphe[current_px].reg_id = to_build->reg_id;
+    Graphe[current_px].reg_id = to_build;
+    pushfront_elem(&to_build->bords, &current_px);
   }
   for (ptarete i = Graphe[current_px].node->nexts; i; i = i->suiv) {
     pushfront_elem(stack, &i->pt->num);
   }
+}
+
+unsigned int from_color_to_uint(Color_t to_convert) {
+  uint8_t bytes[3];
+  bytes[0] = to_convert.Red;
+  bytes[1] = to_convert.Blue;
+  bytes[2] = to_convert.Green;
+  return *(uint32_t *)bytes;
 }
 
 void find_bords(Region_t *to_build, int start) {
@@ -138,24 +148,41 @@ void find_bords(Region_t *to_build, int start) {
   tmp_color.Red = R / to_build->reg_size;
   tmp_color.Green = G / to_build->reg_size;
   tmp_color.Blue = B / to_build->reg_size;
+  MergedRegions[from_color_to_uint(tmp_color)] = to_build;
   to_build->color = tmp_color;
   free_list(&stack);
 }
 
+void merge_regions(list_t *reg_ls) {
+  Region_t *tmp, *color_reg;
+  int bord_member;
+  for (size_t i = 0; i < reg_ls->size; i++) {
+    tmp = see_elem(reg_ls, i);
+    color_reg = MergedRegions[from_color_to_uint(tmp->color)];
+    if (color_reg != tmp) {
+      color_reg->reg_size += tmp->reg_size;
+      while (tmp->bords.size) {
+        bord_member = *(int *)see_elem(&tmp->bords, 0);
+        remove_elem(&tmp->bords, 0);
+        Graphe[bord_member].reg_id = color_reg;
+      }
+      remove_elem(reg_ls, i);
+    }
+  }
+}
+
 void line_pairs(list_t *reg_ls) {
-  Region_t *tmp;
-  int current_reg_id = -2;
+  Region_t *tmp = NULL;
   uint32_t prec_pixel;
   int is_pair_start = TRUE;
   for (uint32_t i = 0; i < image->image_size; i++) {
-    if (Graphe[i].reg_id != -1 && Graphe[i].reg_id != current_reg_id) {
+    if (Graphe[i].reg_id != NULL && Graphe[i].reg_id != tmp) {
       if (is_pair_start == TRUE) {
-        current_reg_id = Graphe[i].reg_id;
+        tmp = Graphe[i].reg_id;
         prec_pixel = i;
         is_pair_start = FALSE;
       } else {
         i--;
-        tmp = see_elem(reg_ls, current_reg_id);
         is_pair_start = TRUE;
         if (i == prec_pixel) {
           append_elem(&tmp->bords, &i);
@@ -169,7 +196,6 @@ void line_pairs(list_t *reg_ls) {
   }
   if (is_pair_start == FALSE) {
     uint32_t end_tmp = image->image_size - 1;
-    tmp = see_elem(reg_ls, current_reg_id);
     if (end_tmp == prec_pixel) {
       append_elem(&tmp->bords, &end_tmp);
       tmp->solo_pair_count++;
@@ -182,7 +208,7 @@ void line_pairs(list_t *reg_ls) {
   int t = 0;
   for (size_t i = 0; i < reg_ls->size; i++) {
     tmp = see_elem(reg_ls, i);
-    if (tmp->solo_pair_count > 1) {
+    if (tmp->solo_pair_count > 0) {
       t++;
     }
   }
@@ -201,7 +227,7 @@ double get_file_size(FILE *fp) {
 int main(int argc, char **argv) {
   time_t t0, t1;
   char *filename = argv[1];
-  char *comp_filename = malloc(strlen(filename) + 20);
+  char *comp_filename = calloc(strlen(filename) + 20, sizeof(uint8_t));
   strncpy(comp_filename, filename, strcspn(filename, "."));
   strcat(comp_filename, ".Compressed");
 
@@ -221,7 +247,7 @@ int main(int argc, char **argv) {
 
   for (size_t i = 0; i < image->image_size; i++) {
     Graphe[i].vu = FALSE;
-    Graphe[i].reg_id = -1;
+    Graphe[i].reg_id = NULL;
     Graphe[i].node = malloc(sizeof(Pixel_Node_t));
     assert(Graphe[i].node);
     Graphe[i].node->color = get_pixel_color(i);
@@ -229,27 +255,32 @@ int main(int argc, char **argv) {
     Graphe[i].node->nbs = 0;
     Graphe[i].node->nexts = NULL;
   }
-
   for (size_t i = 0; i < image->image_size; i++) {
     set_suivants(Graphe[i].node);
   }
-
   list_t reg_ls = init_list(sizeof(Region_t), NULL, free_reg);
+  MergedRegions = calloc(16777215, sizeof(Region_t *));
   puts("Region Bords Recherch Start");
   for (size_t i = 0; i < image->image_size; i++) {
     if (Graphe[i].vu == FALSE) {
-      Region_t in_build;
-      in_build.bords = init_list(sizeof(int), NULL, NULL);
-      in_build.reg_id = reg_ls.size;
-      in_build.reg_size = 0;
-      in_build.solo_pair_count = 0;
-
-      find_bords(&in_build, i);
-      append_elem(&reg_ls, &in_build);
+      Region_t *in_build = malloc(sizeof(Region_t));
+      in_build->reg_size = 0;
+      in_build->solo_pair_count = 0;
+      in_build->bords = init_list(sizeof(int), NULL, NULL);
+      find_bords(in_build, i);
+      pushfront_elem_no_cpy(&reg_ls, in_build);
     }
   }
 
-  printf("%llu Regions to process \n", reg_ls.size);
+  printf("%llu Regions to process Before Merge \n", reg_ls.size);
+
+  merge_regions(&reg_ls); // Est-ce hors sujet ?
+  for (size_t i = 0; i < reg_ls.size; i++) {
+    Region_t *tmp = see_elem(&reg_ls, i);
+    free_list(&tmp->bords);
+  }
+  printf("%llu Regions to process After Merge \n", reg_ls.size);
+
   puts("Region Bords Pairs Recherch Start");
   line_pairs(&reg_ls);
   puts("Region Bords Pairs Recherch Done");
@@ -257,7 +288,7 @@ int main(int argc, char **argv) {
   puts("Compressed File Write Start");
   FILE *fp = fopen(comp_filename, "wb+");
   free(comp_filename);
-  
+
   if (fp == NULL) {
     perror("File Compression File Open Error : ");
     Free_All();
@@ -269,7 +300,8 @@ int main(int argc, char **argv) {
     exit(-1);
   for (size_t i = 0; i < reg_ls.size; i++) {
     Region_t *tmp = see_elem(&reg_ls, i);
-    WriteRegion(fp, tmp);
+      WriteRegion(fp, tmp);
+    
   }
   puts("Compressed File Write Done");
   t1 = time(NULL);
@@ -281,6 +313,7 @@ int main(int argc, char **argv) {
          (1 - (get_file_size(fp) / get_file_size(tmp))) * 100);
   fclose(tmp);
   fclose(fp);
+  free(MergedRegions);
   free_list(&reg_ls);
   Free_All();
 }
