@@ -1,5 +1,6 @@
 #include "../Lib/Shared_Comp_Decomp.h"
 
+
 int Init(char *s);
 
 // Write integers < 4096 * 4096
@@ -24,6 +25,7 @@ void Display_Pixel(Pixel_Node_t *to_print);
 
 struct G_node {
   int vu;
+  uint32_t reg_id;
   Pt_Pixel node;
 };
 

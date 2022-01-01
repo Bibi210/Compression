@@ -37,3 +37,5 @@ void foreach (list_t *list, void (*to_apply)(void *, void *),
 int some(list_t *list, int (*Prelicat)(void *));
 int equals(list_t *list, list_t *other);
 void pushfront_elem_no_cpy(list_t *list, void *data);
+list_t insert_sort(list_t *list);
+llu get_insert_index(list_t *list, void *data);

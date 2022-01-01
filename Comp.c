@@ -1,4 +1,6 @@
 #include "Headers/Comp.h"
+#include <stdint.h>
+#include <stdio.h>
 Image *image;
 legraphe Graphe;
 
@@ -93,6 +95,10 @@ void WriteRegion(FILE *file, Region_t *to_write) {
     fprintf(stderr, "Failed to write region bords size to file");
     exit(EXIT_FAILURE);
   }
+  if (write_unsigned_int(file, to_write->solo_pair_count) == FALSE) {
+    fprintf(stderr, "Failed to write solo_pair_count to file");
+    exit(EXIT_FAILURE);
+  }
   for (size_t i = to_write->bords.size - 1; i != -1; i--) {
     current_px_index = *(int *)see_elem(&to_write->bords, i);
     if (write_unsigned_int(file, current_px_index) == FALSE) {
@@ -103,7 +109,7 @@ void WriteRegion(FILE *file, Region_t *to_write) {
 
 void build_reg(Region_t *to_build, int current_px, list_t *stack) {
   if (Graphe[current_px].node->nbs < 4) {
-    pushfront_elem(&to_build->bords, &current_px);
+    Graphe[current_px].reg_id = to_build->reg_id;
   }
   for (ptarete i = Graphe[current_px].node->nexts; i; i = i->suiv) {
     pushfront_elem(stack, &i->pt->num);
@@ -112,7 +118,7 @@ void build_reg(Region_t *to_build, int current_px, list_t *stack) {
 
 void find_bords(Region_t *to_build, int start) {
   list_t stack = init_list(sizeof(int), NULL, NULL);
-  int elem;
+  uint32_t elem;
   Color_t tmp_color;
   unsigned long long R = 0, G = 0, B = 0;
   pushfront_elem(&stack, &start);
@@ -122,8 +128,8 @@ void find_bords(Region_t *to_build, int start) {
     if (Graphe[elem].vu == FALSE) {
       build_reg(to_build, elem, &stack);
       Graphe[elem].vu = TRUE;
-      to_build->reg_size++;
       tmp_color = get_pixel_color(elem);
+      to_build->reg_size++;
       R += tmp_color.Red;
       G += tmp_color.Green;
       B += tmp_color.Blue;
@@ -136,7 +142,64 @@ void find_bords(Region_t *to_build, int start) {
   free_list(&stack);
 }
 
+void line_pairs(list_t *reg_ls) {
+  Region_t *tmp;
+  int current_reg_id = -2;
+  uint32_t prec_pixel;
+  int is_pair_start = TRUE;
+  for (uint32_t i = 0; i < image->image_size; i++) {
+    if (Graphe[i].reg_id != -1 && Graphe[i].reg_id != current_reg_id) {
+      if (is_pair_start == TRUE) {
+        current_reg_id = Graphe[i].reg_id;
+        prec_pixel = i;
+        is_pair_start = FALSE;
+      } else {
+        i--;
+        tmp = see_elem(reg_ls, current_reg_id);
+        is_pair_start = TRUE;
+        if (i == prec_pixel) {
+          append_elem(&tmp->bords, &i);
+          tmp->solo_pair_count++;
+        } else {
+          pushfront_elem(&tmp->bords, &i);
+          pushfront_elem(&tmp->bords, &prec_pixel);
+        }
+      }
+    }
+  }
+  if (is_pair_start == FALSE) {
+    uint32_t end_tmp = image->image_size - 1;
+    tmp = see_elem(reg_ls, current_reg_id);
+    if (end_tmp == prec_pixel) {
+      append_elem(&tmp->bords, &end_tmp);
+      tmp->solo_pair_count++;
+    } else {
+      pushfront_elem(&tmp->bords, &end_tmp);
+      pushfront_elem(&tmp->bords, &prec_pixel);
+    }
+  }
+
+  int t = 0;
+  for (size_t i = 0; i < reg_ls->size; i++) {
+    tmp = see_elem(reg_ls, i);
+    if (tmp->solo_pair_count > 1) {
+      t++;
+    }
+  }
+  printf("%f %% of Regions With Solo Pixels Pairs\n",
+         (double)t / (double)reg_ls->size * 100);
+}
+
+double get_file_size(FILE *fp) {
+  long size;
+  fseek(fp, 0, SEEK_END);
+  size = ftell(fp);
+  fseek(fp, 0, SEEK_SET);
+  return size;
+}
+
 int main(int argc, char **argv) {
+  time_t t0, t1;
   char *filename = argv[1];
   char *comp_filename = malloc(strlen(filename) + 20);
   strncpy(comp_filename, filename, strcspn(filename, "."));
@@ -151,16 +214,19 @@ int main(int argc, char **argv) {
     exit(0);
   }
   set_delta(atoi(argv[2]));
+
+  t0 = time(NULL);
   Graphe = malloc(sizeof(struct G_node) * image->image_size);
   assert(Graphe);
 
   for (size_t i = 0; i < image->image_size; i++) {
     Graphe[i].vu = FALSE;
+    Graphe[i].reg_id = -1;
     Graphe[i].node = malloc(sizeof(Pixel_Node_t));
+    assert(Graphe[i].node);
     Graphe[i].node->color = get_pixel_color(i);
     Graphe[i].node->num = i;
     Graphe[i].node->nbs = 0;
-    Graphe[i].node->nexts = malloc(sizeof(aretes));
     Graphe[i].node->nexts = NULL;
   }
 
@@ -168,7 +234,30 @@ int main(int argc, char **argv) {
     set_suivants(Graphe[i].node);
   }
 
+  list_t reg_ls = init_list(sizeof(Region_t), NULL, free_reg);
+  puts("Region Bords Recherch Start");
+  for (size_t i = 0; i < image->image_size; i++) {
+    if (Graphe[i].vu == FALSE) {
+      Region_t in_build;
+      in_build.bords = init_list(sizeof(int), NULL, NULL);
+      in_build.reg_id = reg_ls.size;
+      in_build.reg_size = 0;
+      in_build.solo_pair_count = 0;
+
+      find_bords(&in_build, i);
+      append_elem(&reg_ls, &in_build);
+    }
+  }
+
+  printf("%llu Regions to process \n", reg_ls.size);
+  puts("Region Bords Pairs Recherch Start");
+  line_pairs(&reg_ls);
+  puts("Region Bords Pairs Recherch Done");
+
+  puts("Compressed File Write Start");
   FILE *fp = fopen(comp_filename, "wb+");
+  free(comp_filename);
+  
   if (fp == NULL) {
     perror("File Compression File Open Error : ");
     Free_All();
@@ -178,19 +267,20 @@ int main(int argc, char **argv) {
     exit(-1);
   if (write_unsigned_int(fp, image->sizeY) == FALSE)
     exit(-1);
-  for (size_t i = 0; i < image->image_size; i++) {
-    if (Graphe[i].vu == FALSE) {
-      Region_t in_build;
-      in_build.reg_size = 0;
-      in_build.bords = init_list(sizeof(int), NULL, NULL);
-      find_bords(&in_build, i);
-      if (in_build.bords.size > 0 /*Modifier Par Taille Mini de Bords accepté*/) {
-        WriteRegion(fp, &in_build);
-      }
-      free_list(&in_build.bords);
-    }
+  for (size_t i = 0; i < reg_ls.size; i++) {
+    Region_t *tmp = see_elem(&reg_ls, i);
+    WriteRegion(fp, tmp);
   }
+  puts("Compressed File Write Done");
+  t1 = time(NULL);
+  printf("Temps de Passer a la Compression = %f secondes \n", difftime(t1, t0));
 
+  FILE *tmp = fopen(argv[1], "rb");
+
+  printf("Taux de Compression = %f %%\n",
+         (1 - (get_file_size(fp) / get_file_size(tmp))) * 100);
+  fclose(tmp);
   fclose(fp);
+  free_list(&reg_ls);
   Free_All();
 }

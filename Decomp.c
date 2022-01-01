@@ -2,7 +2,7 @@
 #include <stdio.h>
 
 Image *image;
-Color_t orange = {72, 31, 55};
+
 
 void set_pixel_color(Color_t color, int pixel) {
   image->data[(pixel * 3)] = color.Red;
@@ -36,7 +36,7 @@ int read_image_sizes(FILE *fp) {
   image->sizeY = tmp;
   image->image_size = image->sizeX * image->sizeY;
   image->data = calloc(image->image_size * 3, sizeof(GLubyte));
-  
+
   return TRUE;
 }
 
@@ -50,6 +50,12 @@ int ReadRegion(FILE *fp, Region_t *dst) {
     fprintf(stderr, "Failed to read region bords");
     return FALSE;
   }
+
+  if (read_unsigned_int(fp, &dst->solo_pair_count) == FALSE) {
+    fprintf(stderr, "Failed to read region bords");
+    return FALSE;
+  }
+
   dst->bords = init_list(sizeof(int), NULL, NULL);
   for (size_t i = 0; i < nb_bords; i++) {
     if (read_unsigned_int(fp, &tmp) == FALSE) {
@@ -65,6 +71,9 @@ int ReadRegion(FILE *fp, Region_t *dst) {
 int ReadGraph(FILE *fp, list_t *Graph) {
   Region_t tmp;
   int is_end = FALSE;
+  size_t i;
+
+  uint32_t pair_begin, pair_end;
   while (!feof(fp)) {
     if ((is_end = ReadRegion(fp, &tmp)) == FALSE) {
       fprintf(stderr, "Failed to read ReadRegion");
@@ -72,9 +81,19 @@ int ReadGraph(FILE *fp, list_t *Graph) {
     }
     if (is_end == 0)
       break;
-
     pushfront_elem(Graph, &tmp);
+    for (i = 0; i < tmp.bords.size - tmp.solo_pair_count; i += 2) {
+      pair_begin = *(uint32_t *)see_elem(&tmp.bords, i);
+      pair_end = *(uint32_t *)see_elem(&tmp.bords, i + 1);
+      for (size_t t = pair_begin; t != pair_end; t++) {
+        set_pixel_color(tmp.color, t);
+      }
+    }
+    for (size_t t = 0; t < tmp.solo_pair_count; i++, t++) {
+      set_pixel_color(tmp.color, *(uint32_t *)see_elem(&tmp.bords, i));
+    }
   }
+
   return TRUE;
 }
 
@@ -94,7 +113,6 @@ int main(int argc, char **argv) {
   printf("Image SizeX %u | Image SizeY %u \n", image->sizeX, image->sizeY);
 
   list_t Graph = init_list(sizeof(Region_t), NULL, free_reg);
-
   ReadGraph(to_decom, &Graph);
 
   imagesave_PPM("Demo_Output.ppm", image);

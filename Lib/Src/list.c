@@ -224,3 +224,32 @@ int equals(list_t *list, list_t *other) {
   }
   return 0;
 }
+llu get_insert_index(list_t *list, void *data) {
+  llu i;
+  for (i = 0; i < list->size; i++) {
+    if (list->comp_func) {
+      if (list->comp_func(data, see_elem(list, i))) {
+        return i;
+      }
+    } else {
+      fprintf(stderr, "Dev Need to specify comp_func");
+      exit(EXIT_FAILURE);
+    }
+    see_elem(list, i);
+  }
+  return list->size;
+}
+
+list_t insert_sort(list_t *list) {
+  llu insert_at, i;
+  list_t SortedList =
+      init_list(list->data_size, list->comp_func, list->free_func);
+  void *temp_elem;
+  for (i = 0; i < list->size; i++) {
+    temp_elem = see_elem(list, i);
+    insert_at = get_insert_index(&SortedList, temp_elem);
+    insert_elem(&SortedList, temp_elem, insert_at);
+  }
+  free_list(list);
+  return SortedList;
+}
