@@ -167,7 +167,9 @@ void merge_regions(list_t *reg_ls) {
         Graphe[bord_member].reg_id = color_reg;
       }
       remove_elem(reg_ls, i);
+      i--;
     }
+    free_list(&tmp->bords);
   }
 }
 
@@ -204,16 +206,6 @@ void line_pairs(list_t *reg_ls) {
       pushfront_elem(&tmp->bords, &prec_pixel);
     }
   }
-
-  int t = 0;
-  for (size_t i = 0; i < reg_ls->size; i++) {
-    tmp = see_elem(reg_ls, i);
-    if (tmp->solo_pair_count > 0) {
-      t++;
-    }
-  }
-  printf("%f %% of Regions With Solo Pixels Pairs\n",
-         (double)t / (double)reg_ls->size * 100);
 }
 
 double get_file_size(FILE *fp) {
@@ -273,12 +265,7 @@ int main(int argc, char **argv) {
   }
 
   printf("%llu Regions to process Before Merge \n", reg_ls.size);
-
   merge_regions(&reg_ls); // Est-ce hors sujet ?
-  for (size_t i = 0; i < reg_ls.size; i++) {
-    Region_t *tmp = see_elem(&reg_ls, i);
-    free_list(&tmp->bords);
-  }
   printf("%llu Regions to process After Merge \n", reg_ls.size);
 
   puts("Region Bords Pairs Recherch Start");
@@ -300,12 +287,13 @@ int main(int argc, char **argv) {
     exit(-1);
   for (size_t i = 0; i < reg_ls.size; i++) {
     Region_t *tmp = see_elem(&reg_ls, i);
+    if (tmp->reg_size >= 0) { // Opti this
       WriteRegion(fp, tmp);
-    
+    }
   }
   puts("Compressed File Write Done");
   t1 = time(NULL);
-  printf("Temps de Passer a la Compression = %f secondes \n", difftime(t1, t0));
+  printf("Temps de Compression = %f secondes \n", difftime(t1, t0));
 
   FILE *tmp = fopen(argv[1], "rb");
 
