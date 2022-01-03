@@ -1,8 +1,6 @@
-#include "Lib/Shared_Comp_Decomp.h"
-#include <stdio.h>
+#include "Headers/Decomp.h"
 
 Image *image;
-
 
 void set_pixel_color(Color_t color, int pixel) {
   image->data[(pixel * 3)] = color.Red;
@@ -68,10 +66,12 @@ int ReadRegion(FILE *fp, Region_t *dst) {
   return TRUE;
 }
 
-int ReadGraph(FILE *fp, list_t *Graph) {
+int ReadGraph(FILE *fp) {
   Region_t tmp;
   int is_end = FALSE;
   size_t i;
+  read_image_sizes(fp);
+  printf(" Size X : %d | Size Y : %d\n", image->sizeX, image->sizeY);
 
   uint32_t pair_begin, pair_end;
   while (!feof(fp)) {
@@ -80,44 +80,71 @@ int ReadGraph(FILE *fp, list_t *Graph) {
       return FALSE;
     }
     if (is_end == 0)
-      break;
-    pushfront_elem(Graph, &tmp);
+      return TRUE;
     for (i = 0; i < tmp.bords.size - tmp.solo_pair_count; i += 2) {
       pair_begin = *(uint32_t *)see_elem(&tmp.bords, i);
       pair_end = *(uint32_t *)see_elem(&tmp.bords, i + 1);
-      for (size_t t = pair_begin; t <= pair_end ; t++) {
+      for (size_t t = pair_begin; t <= pair_end; t++) {
         set_pixel_color(tmp.color, t);
       }
     }
     for (size_t t = 0; t < tmp.solo_pair_count; i++, t++) {
       set_pixel_color(tmp.color, *(uint32_t *)see_elem(&tmp.bords, i));
     }
+    free_list(&tmp.bords);
   }
 
   return TRUE;
 }
 
+void Comparaison_Img(Image *A, Image *B) {
+  Color_t A_current_pixel;
+  Color_t B_current_pixel;
+  double is_equal = 0;
+  if (A->image_size != B->image_size) {
+    fprintf(stderr, "The Two Image dont have the same sizes\n");
+  } else {
+    for (size_t i = 0; i < A->image_size; i++) {
+      A_current_pixel = get_pixel_color(i, A);
+      B_current_pixel = get_pixel_color(i, B);
+      if (is_color_equal(A_current_pixel, B_current_pixel, 0) == FALSE)
+        is_equal++;
+    }
+  }
+  printf(" Taux de Pixels Differents %f %%\n",
+         (100 * is_equal) / (double)B->image_size);
+}
+
 int main(int argc, char **argv) {
+  clock_t t0, t1;
+  char *filename = argv[1];
+  char *origin_filename = calloc(strlen(filename) + 4, sizeof(uint8_t));
+  strncpy(origin_filename, filename, strcspn(filename, "."));
+  strcat(origin_filename, ".ppm");
+
   image = malloc(sizeof(Image));
   if (argc < 2 || strcmp("Compressed", get_filename_ext(argv[1]))) {
     fprintf(stderr, "Usage : Decomp FileName.Compressed\n");
     exit(0);
   }
-  FILE *to_decom = fopen(argv[1], "rb");
-  if (to_decom == NULL) {
+  FILE *to_decomp = fopen(argv[1], "rb");
+  if (to_decomp == NULL) {
     perror("Unable to open the compressed file :");
     exit(-1);
   }
-  read_image_sizes(to_decom);
-  puts("Decomp Start :\n");
-  printf("Image SizeX %u | Image SizeY %u \n", image->sizeX, image->sizeY);
-
-  list_t Graph = init_list(sizeof(Region_t), NULL, free_reg);
-  ReadGraph(to_decom, &Graph);
-
+  t0 = clock();
+  printf("\nDebut Decompression de %s : \n", filename);
+  ReadGraph(to_decomp);
   imagesave_PPM("Demo_Output.ppm", image);
+  t1 = clock();
+  printf(" Temps de Decompression = %f ms \n",
+         (double)(t1 - t0) * 1000 / CLOCKS_PER_SEC);
+
+  Image before;
+  ImageLoad_PPM(origin_filename, &before);
+  Comparaison_Img(&before, image);
+
   free(image->data);
   free(image);
-  free_list(&Graph);
-  fclose(to_decom);
+  fclose(to_decomp);
 }

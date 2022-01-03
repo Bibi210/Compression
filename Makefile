@@ -6,7 +6,7 @@
 #  Modificiation : Dibassi Brahima
 #  Commentaire : Modfier Pour Projet
 #  
-#  Universit� Paris VIII
+#  Université Paris VIII
 
 SHELL = /bin/sh
 #definition des commandes utilisees
@@ -40,6 +40,6 @@ clean:
 	$(RM) $(EXE) *~ $(shell find . -name "*.o")
 	$(RM) $(EXE) *~ $(shell find . -name "*.Compressed")
 	$(RM) -rf *.dSYM
-	$(RM) -rf demo_comp.ppm
+	$(RM) -rf Demo_Output.ppm 
 
 .PHONY: all clean

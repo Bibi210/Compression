@@ -63,7 +63,7 @@ int ImageLoad_PPM(char *filename, Image *img) {
 
   upsidedown(img);
   img->image_size = img->sizeX * img->sizeY;
-  
+
   fclose(fp);
   return 1;
 }

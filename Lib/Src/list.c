@@ -23,6 +23,14 @@ list_t *init_list_ptr(size_t data_size, int (*comp_func)(void *, void *),
   return output;
 }
 
+void free_node(Node_t *node, void (*free_func)(void *)) {
+  if (node) {
+    free_func(node->data);
+    free(node);
+    node = NULL;
+  }
+}
+
 void free_list(list_t *list) {
   Node_t *i, *temp;
   for (i = list->first; i;) {
@@ -34,6 +42,7 @@ void free_list(list_t *list) {
   list->first = NULL;
 }
 
+// Alloc a Node_t and copy Given Data
 Node_t *create_node(void *data, size_t data_size) {
   Node_t *node = malloc(sizeof(Node_t));
   assert(node);
@@ -59,6 +68,7 @@ void pushfront_elem(list_t *list, void *data) {
   list->size++;
 }
 
+// Push Front Without Copy
 void pushfront_elem_no_cpy(list_t *list, void *data) {
   Node_t *tmp, *node;
   node = malloc(sizeof(Node_t));
@@ -92,15 +102,6 @@ void append_elem(list_t *list, void *data) {
   return;
 }
 
-void print_list(list_t *list, void (*print_func)(void *data)) {
-  Node_t *i;
-  printf("Liste of %llu elements:\n", list->size);
-  for (i = list->first; i != NULL; i = i->next) {
-    print_func(i->data);
-    puts("");
-  }
-}
-
 void remove_elem(list_t *list, llu index) {
   Node_t *i, *tmp;
   list->size--;
@@ -117,6 +118,7 @@ void remove_elem(list_t *list, llu index) {
   free_node(i, list->free_func);
 }
 
+// Remove only if elem is allocated
 void remove_elem_no_free(list_t *list, llu index) {
   Node_t *i, *tmp;
   list->size--;
@@ -154,22 +156,17 @@ void insert_elem(list_t *list, void *data, llu index) {
   list->size++;
 }
 
+//! Retourne un pointer vers le node a vos risques et perils
 void *see_elem(list_t *list, llu index) {
   Node_t *i;
   if (list->size == 0)
     return NULL;
   for (i = list->first; i->next != NULL && index; i = i->next, index--)
     ;
-  return i->data; //! Retourne un pointer vers le node a vos risques et perils
+  return i->data; 
 }
 
-void free_node(Node_t *node, void (*free_func)(void *)) {
-  if (node) {
-    free_func(node->data);
-    free(node);
-    node = NULL;
-  }
-}
+
 
 llu get_smallest_index(list_t *list) {
   llu i, best_index = 0;
@@ -252,4 +249,13 @@ list_t insert_sort(list_t *list) {
   }
   free_list(list);
   return SortedList;
+}
+
+void print_list(list_t *list, void (*print_func)(void *data)) {
+  Node_t *i;
+  printf("Liste of %llu elements:\n", list->size);
+  for (i = list->first; i != NULL; i = i->next) {
+    print_func(i->data);
+    puts("");
+  }
 }
