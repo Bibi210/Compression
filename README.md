@@ -1,12 +1,4 @@
----
-title: Algorithmique Avancée Projet 9B
-subtitle: Compression par gestion de graphe non orienté
-author: Dibassi Brahima 19005521
-date: 3 Janvier, 2022
----
- 
-\newpage
- 
+
 # Introduction
  
 Dans le cadre de la validation du cours de programmation avancée,\newline
@@ -28,7 +20,6 @@ La liste de ces listes compose les pixels de bords des régions. Ils organisent 
 Avec cette liste de listes et la couleur qui y est associée, vous créez une nouvelle façon de stocker l’image.\newline
 Il faut maintenant, mettre en place un système de sauvegarde et un système de restauration de l’image.\newline
  
-\newpage
 # Documentation
  
 ## Utilisation
@@ -63,7 +54,6 @@ La sortie de la Compression se trouve dans le fichier [FilePath].Compressed
 \
 FilePath : Un Path d'un fichier.Compressed \newline \newline
 La sortie de la Décompression se trouve dans le fichier ./Demo_Output.ppm
-\newpage
  
 ## Fichiers
 > Résumé des fichiers du projets et leurs contenu
@@ -76,7 +66,6 @@ Shared_Comp_Decomp : Structures et Fonctions partagées entre la compression et 
  
 Comp : Compression d'une image
 Decomp : Décompression d'une image
-\newpage
  
 # Déroulé du projet
  
@@ -158,8 +147,6 @@ Avec de nombreux tests sur des images très diverses est variée on se rends com
 ### Cons
  
 Cet Algorithme a une grosse faiblesse c'est qu'il est extrêmement dépendants de l'image que ce soit en mémoire,vitesse ou taux de compression en tout cas dans l'implémentation que j'en ai fait.
- 
-\newpage
  
 ### Exécutions
  
