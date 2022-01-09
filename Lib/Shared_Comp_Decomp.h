@@ -2,7 +2,7 @@
 
 #include "../Lib/ima.h"
 #include "../Lib/list.h"
-#include <_stdio.h>
+#include <stdio.h>
 #include <assert.h>
 #include <stdint.h>
 #include <stdio.h>
