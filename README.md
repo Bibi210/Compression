@@ -1,24 +1,24 @@
 
 # Introduction
  
-Dans le cadre de la validation du cours de programmation avancée,\newline
-j'ai choisi pour projet final la Compression d'image par gestion de graphe non orienté a l'aide des listes de successeurs. \newline
+Dans le cadre de la validation du cours de programmation avancée,\
+j'ai choisi pour projet final la Compression d'image par gestion de graphe non orienté a l'aide des listes de successeurs. \
 Je vais dans ce rapport expliquer le code de mon projet, les choix fait et pour finir voir les avantages et défauts de notre algorithme
  
 ## Énoncé du projet
  
-Nous considérons ici qu’une image est un graphe où chaque pixel est un noeud lié au plus à ses quatre voisins.\newline
+Nous considérons ici qu’une image est un graphe où chaque pixel est un noeud lié au plus à ses quatre voisins.\
 Nous ajoutons une contrainte : un pixel p est lié à son voisin v, si et seulement si p et v sont effectivement voisins (au sens des quatre voisins) et ont la "même" couleur.
-\newline
-Étudier ce graphe consiste à le gérer, avec son million de noeuds.\newline
-Mettez en place une méthode de recherche des parties connexes du graphe.\newline
-Votre méthode doit vous avoir fourni un numéro pour chaque partie connexe.\newline
-Il suffit maintenant de parcourir une partie connexe en cherchant les sommets qui n’ont pas quatre successeurs, ce sont les sommets de la frontière de la région.\newline
-Ces sommets seront conservés dans une liste (ou un vecteur). \newline
-Il est conseillé de se souvenir aussi des pixels liés ou des pixels non liés (au choix).\newline
-La liste de ces listes compose les pixels de bords des régions. Ils organisent donc une partition de l’image.\newline
-Avec cette liste de listes et la couleur qui y est associée, vous créez une nouvelle façon de stocker l’image.\newline
-Il faut maintenant, mettre en place un système de sauvegarde et un système de restauration de l’image.\newline
+\
+Étudier ce graphe consiste à le gérer, avec son million de noeuds.\
+Mettez en place une méthode de recherche des parties connexes du graphe.\
+Votre méthode doit vous avoir fourni un numéro pour chaque partie connexe.\
+Il suffit maintenant de parcourir une partie connexe en cherchant les sommets qui n’ont pas quatre successeurs, ce sont les sommets de la frontière de la région.\
+Ces sommets seront conservés dans une liste (ou un vecteur). \
+Il est conseillé de se souvenir aussi des pixels liés ou des pixels non liés (au choix).\
+La liste de ces listes compose les pixels de bords des régions. Ils organisent donc une partition de l’image.\
+Avec cette liste de listes et la couleur qui y est associée, vous créez une nouvelle façon de stocker l’image.\
+Il faut maintenant, mettre en place un système de sauvegarde et un système de restauration de l’image.
  
 # Documentation
  
@@ -30,9 +30,9 @@ Il faut maintenant, mettre en place un système de sauvegarde et un système de 
    bash ./Exec.sh [FileName] [0 >= Max_Delta <= 20]
 ```
 \
-FileName : Un nom de fichier sans son extension dans Img/ \newline \newline
-Max_Delta: La somme des écarts maximaux entre les 3 composantes RGB de deux couleurs qui est acceptée. \newline
-\newline
+FileName : Un nom de fichier sans son extension dans Img/\
+Max_Delta: La somme des écarts maximaux entre les 3 composantes RGB de deux couleurs qui est acceptée. \
+\
 La sortie de la Décompression se trouve dans le fichier Demo_Output.ppm
  
 ### Compression
@@ -41,9 +41,9 @@ La sortie de la Décompression se trouve dans le fichier Demo_Output.ppm
   ./Comp [FilePath] [0 >= Max_Delta <= 20]
 ```
 \
-FilePath : Un Path d'un fichier.ppm \newline \newline
-Max_Delta: La somme des écarts maximaux entre les 3 composantes RGB de deux couleurs qui est acceptée. \newline
-\newline
+FilePath : Un Path d'un fichier.ppm \
+Max_Delta: La somme des écarts maximaux entre les 3 composantes RGB de deux couleurs qui est acceptée. \
+\
 La sortie de la Compression se trouve dans le fichier [FilePath].Compressed
  
 ### Décompression
@@ -52,7 +52,7 @@ La sortie de la Compression se trouve dans le fichier [FilePath].Compressed
   ./Decomp [FilePath]
 ```
 \
-FilePath : Un Path d'un fichier.Compressed \newline \newline
+FilePath : Un Path d'un fichier.Compressed\
 La sortie de la Décompression se trouve dans le fichier ./Demo_Output.ppm
  
 ## Fichiers
@@ -73,32 +73,32 @@ Decomp : Décompression d'une image
  
 ### Suppression ou non des petites zones
  
-L'une des plus forte limitation de cette algorithme de compression est les petites zones.\newline
-Dans ce projet j'ai fait le choix après réflexion de ne pas les supprimer,\newline
-car je n'aime pas l'idée d'induire de la perte "non contrôlée".\newline
-Lorsque je supprime les zones puis que la décompression essaye de les remplir j'ai des résultats très différents d'un test à l'autre.\newline
+L'une des plus forte limitation de cette algorithme de compression est les petites zones.\
+Dans ce projet j'ai fait le choix après réflexion de ne pas les supprimer,\
+car je n'aime pas l'idée d'induire de la perte "non contrôlée".\
+Lorsque je supprime les zones puis que la décompression essaye de les remplir j'ai des résultats très différents d'un test à l'autre.\
 De plus je trouve que leurs supression cache les faiblesses de l'algorithme
  
 ### Limitation de la taille de l'image a 4096 * 4096
  
-Tout simplement car une immense partie des images sont inférieures à cette taille.\newline
-De plus cette limitation permet d'écrire les index des pixels non plus sur 4 octets mais sur 3 octets.\newline
-On gagne instantanément en taux compression.\newline
+Tout simplement car une immense partie des images sont inférieures à cette taille.\
+De plus cette limitation permet d'écrire les index des pixels non plus sur 4 octets mais sur 3 octets.\
+On gagne instantanément en taux compression.\
  
 ## Problèmes Rencontrés
  
 ### Décompression
  
-J'ai eu beaucoup de mal à trouver comment recréer mon image à partir des bords des zones.\newline
-Après pas mal de réflexion j'ai eu l'idée d'utiliser des paires de pixels de bords cela me permet de dire avec certitude qu'elle est la couleur entre ses deux extrémités.\newline
+J'ai eu beaucoup de mal à trouver comment recréer mon image à partir des bords des zones.\
+Après pas mal de réflexion j'ai eu l'idée d'utiliser des paires de pixels de bords cela me permet de dire avec certitude qu'elle est la couleur entre ses deux extrémités.
  
-J'ai pu grâce à cette idée réduire énormément le nombre de bords que j'écris dans mon fichier compressé.\newline
+J'ai pu grâce à cette idée réduire énormément le nombre de bords que j'écris dans mon fichier compressé.\
 J'écris désormais que les bords à l'extrémité de chaques "lignes"
 Dans les meilleurs cas, il est possible d'écrire une zone entière sur seulement 15 octets.
  
 ### Code Complexe
  
-Lors de mon premier jet du projet j'ai écris du code très difficile à déboguer et donc a amélioré.\newline
+Lors de mon premier jet du projet j'ai écris du code très difficile à déboguer et donc a amélioré.\
 Lorsque j'ai repris le cours et après avoir compartimenté chacun des modules du projet,
 j'ai pu refaire le projet sur de bonnes base ce qui m'a permis d'aller plus loin.
  
@@ -107,12 +107,12 @@ j'ai pu refaire le projet sur de bonnes base ce qui m'a permis d'aller plus loin
 ## Apportées
  
 ### Region Merging
-L'idée est asser simple puisque maintenant l'image est ecrite en zone de couleur,\newline
-il s'agit simplement ici de regrouper avant l'écriture les zones par couleurs.\newline
+L'idée est asser simple puisque maintenant l'image est ecrite en zone de couleur,\
+il s'agit simplement ici de regrouper avant l'écriture les zones par couleurs.\
 Cela permet dans une moindre mesure d'absorber les zones à faible nombre de pixels.
  
 ### Bords Pairs
-L'idée ici est de ne pas écrire tous les bords mais des paires de bords Debut_Ligne Fin_Ligne.\newline
+L'idée ici est de ne pas écrire tous les bords mais des paires de bords Debut_Ligne Fin_Ligne.\
 Nous savons qu'il ya que des Pixels(Bords inclus) de notre Zone entre ses deux bornes.
  
 ## Possibles
@@ -121,15 +121,15 @@ Ici ce sont juste des hypothèses dont il faudrait tester pour certaines l'effic
  
 ### Huffman Encoding
  
-Simplement encoder le [file.Compressed] selon le codage d'huffman.\newline
-On gagne pas mal en compression.\newline
+Simplement encoder le [file.Compressed] selon le codage d'huffman.\
+On gagne pas mal en compression.\
 Puisque ce n'est pas le sujet du projet je ne l'ai pas ajouté à l'archive.
  
 ### Analyze Automatique
  
-Le but serait d'ajouter un choix de [Max_Delta] automatique, par couleurs.\newline
+Le but serait d'ajouter un choix de [Max_Delta] automatique, par couleurs.\
 Cela demande de trouver une formulation mathématique de la différence "visuel" entre deux couleurs autre que la simple distance euclidienne
-\newline(Je n'ai pas pu le faire par moi même).\newline
+\(Je n'ai pas pu le faire par moi même).\
 Un Exemple du type de formulation mathématique [**Ici**](https://www.compuphase.com/cmetric.htm).
  
 # Conclusion
@@ -150,7 +150,7 @@ Cet Algorithme a une grosse faiblesse c'est qu'il est extrêmement dépendants d
  
 ### Exécutions
  
-Jeux d'exécutions avec des delta qui permettent de retrouver l'image sans différences visibles.\newline
+Jeux d'exécutions avec des delta qui permettent de retrouver l'image sans différences visibles.\
 Toutes les images se trouvent dans l'archive
  
  
